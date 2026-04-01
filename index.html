@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TT Audit — Rutas de Campaña · Actualización Activos Comerciales</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Barlow+Condensed:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root {
+  --bat-black:   #F4F6FA;
+  --bat-dark:    #FFFFFF;
+  --bat-panel:   #F8F9FC;
+  --bat-card:    #FFFFFF;
+  --bat-border:  #DDE2EE;
+  --bat-gold:    #1A4BAD;
+  --bat-gold2:   #2E63D4;
+  --bat-red:     #D94040;
+  --bat-blue:    #1A4BAD;
+  --bat-green:   #1E8A5E;
+  --bat-text:    #1A2035;
+  --bat-muted:   #6B7592;
+  --bat-subtle:  #C8D0E4;
+  --merch-a:     #1A4BAD;
+  --merch-b:     #1E8A5E;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bat-black); color: var(--bat-text); font-family: 'Barlow', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+/* ── HEADER ── */
+.header { background: var(--bat-dark); border-bottom: 2px solid var(--bat-blue); padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 58px; position: sticky; top: 0; z-index: 1000; }
+.header-left { display: flex; align-items: center; gap: 16px; }
+.bat-logo { display: flex; align-items: center; gap: 10px; }
+.bat-logo-mark { width: 32px; height: 32px; background: var(--bat-blue); clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); display: flex; align-items: center; justify-content: center; }
+.bat-logo-mark span { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 13px; color: #fff; letter-spacing: -0.5px; }
+.bat-title { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; letter-spacing: 1px; color: var(--bat-blue); text-transform: uppercase; }
+.header-divider { width: 1px; height: 28px; background: var(--bat-border); }
+.header-sub { font-size: 12px; color: #6B7592; font-weight: 400; letter-spacing: 0.3px; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.badge-total { background: var(--bat-card); border: 1px solid var(--bat-border); border-radius: 4px; padding: 4px 10px; font-size: 11px; color: var(--bat-muted); }
+.badge-total strong { color: var(--bat-blue); font-weight: 600; }
+
+/* ── CONTROLS ── */
+.controls { background: var(--bat-panel); border-bottom: 1px solid var(--bat-border); padding: 10px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ctrl-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 600; color: var(--bat-muted); text-transform: uppercase; letter-spacing: 1px; }
+.day-pills { display: flex; gap: 4px; }
+.day-pill { padding: 4px 14px; border-radius: 3px; border: 1px solid #DDE2EE; font-size: 12px; font-weight: 500; cursor: pointer; background: #FFFFFF; color: #6B7592; transition: all .15s; font-family: 'Barlow', sans-serif; }
+.day-pill:hover { border-color: var(--bat-blue); color: var(--bat-blue); }
+.day-pill.active { background: var(--bat-blue); border-color: var(--bat-blue); color: #fff; font-weight: 700; }
+.ctrl-sep { width: 1px; height: 22px; background: var(--bat-border); }
+.merch-toggle { display: flex; border: 1px solid var(--bat-border); border-radius: 3px; overflow: hidden; }
+.merch-btn { padding: 4px 18px; font-size: 12px; font-weight: 600; cursor: pointer; background: #F8F9FC; color: #6B7592; border: none; font-family: 'Barlow', sans-serif; letter-spacing: 0.3px; transition: all .15s; }
+.merch-btn.active-a { background: var(--merch-a); color: #fff; }
+.merch-btn.active-b { background: var(--merch-b); color: #fff; }
+.gmaps-btn { margin-left: auto; display: flex; align-items: center; gap: 6px; padding: 5px 14px; background: transparent; border: 1px solid var(--bat-blue); border-radius: 3px; color: var(--bat-blue); font-size: 11px; font-weight: 600; font-family: 'Barlow Condensed', sans-serif; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; transition: all .15s; }
+.gmaps-btn:hover { background: var(--bat-blue); color: #fff; }
+.gmaps-icon { width: 14px; height: 14px; }
+
+/* ── STATS BAR ── */
+.stats-bar { background: var(--bat-dark); border-bottom: 1px solid var(--bat-border); padding: 8px 24px; display: flex; gap: 20px; align-items: center; flex-wrap: wrap; }
+.stat-item { display: flex; align-items: baseline; gap: 6px; }
+.stat-val { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--bat-blue); line-height: 1; }
+.stat-lbl { font-size: 10px; color: var(--bat-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.stat-sep { width: 1px; height: 20px; background: var(--bat-border); }
+.project-tags { display: flex; gap: 6px; flex-wrap: wrap; }
+.ptag { display: flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 2px; font-size: 10px; font-weight: 600; letter-spacing: 0.3px; }
+.ptag.disp { background: rgba(26,75,173,.10); color: #1A4BAD; border: 1px solid rgba(26,75,173,.25); }
+.ptag.reel { background: rgba(180,130,20,.10); color: #8B6A10; border: 1px solid rgba(180,130,20,.25); }
+.ptag.facing { background: rgba(30,138,94,.10); color: #1E8A5E; border: 1px solid rgba(30,138,94,.25); }
+
+/* ── MAIN LAYOUT ── */
+.main { display: grid; grid-template-columns: 340px 1fr; height: calc(100vh - 58px - 44px - 46px); }
+@media (max-width: 800px) { .main { grid-template-columns: 1fr; height: auto; } }
+
+/* ── SIDEBAR ── */
+.sidebar { background: var(--bat-panel); border-right: 1px solid var(--bat-border); display: flex; flex-direction: column; overflow: hidden; }
+.sidebar-head { padding: 10px 14px 8px; border-bottom: 1px solid var(--bat-border); }
+.sidebar-title { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; font-weight: 600; color: var(--bat-muted); text-transform: uppercase; letter-spacing: 0.8px; }
+.route-list { flex: 1; overflow-y: auto; padding: 6px; }
+.route-list::-webkit-scrollbar { width: 3px; }
+.route-list::-webkit-scrollbar-track { background: transparent; }
+.route-list::-webkit-scrollbar-thumb { background: var(--bat-subtle); border-radius: 2px; }
+
+.stop-card { display: flex; gap: 10px; padding: 9px 10px; border-radius: 4px; margin-bottom: 3px; border: 1px solid transparent; cursor: pointer; transition: all .12s; position: relative; }
+.stop-card:hover { background: var(--bat-card); border-color: var(--bat-border); }
+.stop-card.selected { background: #EEF3FC; border-color: var(--bat-blue); }
+.stop-card.selected::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--bat-blue); border-radius: 4px 0 0 4px; }
+
+.stop-num-wrap { display: flex; flex-direction: column; align-items: center; gap: 0; flex-shrink: 0; }
+.stop-num { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0; }
+.stop-connector { width: 1px; height: 20px; background: var(--bat-border); margin: 2px 0; }
+.stop-body { flex: 1; min-width: 0; }
+.stop-name { font-size: 12px; font-weight: 600; color: var(--bat-text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+.stop-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 3px; }
+.stop-district { font-size: 10px; color: var(--bat-muted); }
+.stop-time { font-size: 10px; font-weight: 600; font-family: 'Barlow Condensed', sans-serif; color: var(--bat-blue); background: rgba(26,75,173,.10); padding: 1px 5px; border-radius: 2px; }
+.stop-dur { font-size: 10px; color: var(--bat-muted); }
+.stop-ot { font-size: 10px; color: #6B7592; line-height: 1.3; margin-bottom: 2px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.stop-cig { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #5FD4A0; background: rgba(46,158,107,.15); border: 1px solid rgba(46,158,107,.25); padding: 1px 6px; border-radius: 2px; margin-top: 2px; }
+.nav-link { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; color: #1A4BAD; margin-top: 3px; text-decoration: none; cursor: pointer; }
+.nav-link:hover { color: #2E63D4; }
+
+/* ── MAP ── */
+#map { flex: 1; height: 100%; min-height: 420px; }
+.leaflet-container { background: #F0F4F8; }
+
+/* Custom marker */
+.bat-marker { border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-family: 'Barlow', sans-serif; color: white; border: 2px solid rgba(255,255,255,.5); box-shadow: 0 2px 8px rgba(0,0,0,.6); transition: all .15s; }
+.bat-marker.selected { border-color: #C8A84B !important; box-shadow: 0 0 0 3px rgba(200,168,75,.4), 0 2px 10px rgba(0,0,0,.8) !important; transform: scale(1.2); }
+
+/* ── POPUP ── */
+.leaflet-popup-content-wrapper { background: #FFFFFF; border: 1px solid #DDE2EE; border-radius: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.15); }
+.leaflet-popup-content { margin: 0; }
+.leaflet-popup-tip { background: #FFFFFF; }
+.leaflet-popup-close-button { color: #6B7592 !important; top: 6px !important; right: 8px !important; font-size: 16px !important; }
+.popup-inner { padding: 12px 14px; min-width: 240px; }
+.popup-header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+.popup-num { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 1px; }
+.popup-title-wrap {}
+.popup-title { font-size: 13px; font-weight: 600; color: #1A2035; line-height: 1.3; margin-bottom: 2px; }
+.popup-cadena { font-size: 10px; font-weight: 600; letter-spacing: 0.5px; }
+.popup-grid { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin-bottom: 8px; }
+.popup-key { font-size: 10px; color: #6B7592; text-transform: uppercase; letter-spacing: 0.4px; font-weight: 500; white-space: nowrap; padding-top: 1px; }
+.popup-val { font-size: 11px; color: #1A2035; line-height: 1.4; }
+.popup-cig { display: flex; align-items: center; gap: 5px; padding: 6px 8px; background: rgba(30,138,94,.08); border: 1px solid rgba(30,138,94,.2); border-radius: 3px; margin-bottom: 8px; }
+.popup-cig-icon { font-size: 12px; }
+.popup-cig-text { font-size: 11px; color: #1E8A5E; font-weight: 500; }
+.popup-actions { display: flex; gap: 6px; }
+.popup-btn { flex: 1; padding: 6px; border-radius: 3px; font-size: 11px; font-weight: 600; font-family: 'Barlow', sans-serif; cursor: pointer; text-align: center; transition: all .12s; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 4px; border: none; }
+.popup-btn-maps { background: #4285F4; color: #fff; }
+.popup-btn-maps:hover { background: #5a96f5; }
+.popup-btn-waze { background: #33CCFF; color: #000; }
+.popup-btn-waze:hover { background: #55D9FF; }
+
+/* Leaflet dark overrides */
+.leaflet-control-zoom a { background: #FFFFFF !important; color: #1A2035 !important; border-color: #DDE2EE !important; }
+.leaflet-control-zoom a:hover { background: #EEF3FC !important; }
+.leaflet-bar { border: 1px solid #DDE2EE !important; box-shadow: 0 2px 8px rgba(0,0,0,.08) !important; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="bat-logo">
+      <div class="bat-logo-mark"><span>TT</span></div>
+      <span class="bat-title">TT Audit</span>
+    </div>
+    <div class="header-divider"></div>
+    <span class="header-sub">Rutas de Campaña — Actualización Activos Comerciales · Lima 2025</span>
+  </div>
+  <div class="header-right">
+    <div class="badge-total">Total: <strong>150 puntos</strong> · 5 días · 2 mercaderistas</div>
+  </div>
+</div>
+
+<div class="controls">
+  <span class="ctrl-label">Día</span>
+  <div class="day-pills">
+    <button class="day-pill active" onclick="selectDay(1,this)">01</button>
+    <button class="day-pill" onclick="selectDay(2,this)">02</button>
+    <button class="day-pill" onclick="selectDay(3,this)">03</button>
+    <button class="day-pill" onclick="selectDay(4,this)">04</button>
+    <button class="day-pill" onclick="selectDay(5,this)">05</button>
+  </div>
+  <div class="ctrl-sep"></div>
+  <span class="ctrl-label">Mercaderista</span>
+  <div class="merch-toggle">
+    <button class="merch-btn active-a" id="btnA" onclick="selectMerch('A')">A</button>
+    <button class="merch-btn" id="btnB" onclick="selectMerch('B')">B</button>
+  </div>
+  <button class="gmaps-btn" onclick="openFullRoute()">
+    <svg class="gmaps-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+    Ver ruta completa en Google Maps
+  </button>
+</div>
+
+<div class="stats-bar" id="statsBar"></div>
+
+<div class="main">
+  <div class="sidebar">
+    <div class="sidebar-head">
+      <div class="sidebar-title" id="sidebarTitle">Paradas del día</div>
+    </div>
+    <div class="route-list" id="routeList"></div>
+  </div>
+  <div id="map"></div>
+</div>
+
+<script>
+const DATA = {"1":{"MERCADERISTA A":[{"orden":1,"pos":"TAMBO - TDA BOCANEGRA","cadena":"TAMBO","distrito":"CALLAO","proyecto":"REELS","ot":"IMPLEMENTAR REELS","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. BOCANEGRA MZ D LOTE 1","lat":-12.00734,"lon":-77.10029},{"orden":2,"pos":"TAMBO - CHINCHAYSUYO","cadena":"TAMBO","distrito":"INDEPENDENCIA","proyecto":"REELS","ot":"IMPLEMENTAR REELS","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. CHINCHAYSUYO MZA.N LTE.13","lat":-11.97993,"lon":-77.05878},{"orden":3,"pos":"TAMBO - GIUFUENTE","cadena":"TAMBO","distrito":"COMAS","proyecto":"REELS","ot":"IMPLEMENTAR REELS","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"MZ P LOTE 24 URB SANTA LUISA","lat":-11.94187,"lon":-77.06083},{"orden":4,"pos":"AVA - PUEBLO LIBRE","cadena":"AVA","distrito":"PUEBLO LIBRE","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. DEL RIO 110 - PUEBLO LIBRE","lat":-12.067009,"lon":-77.054626},{"orden":5,"pos":"REPSOL - DOS DE MAYO","cadena":"REPSOL","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"AV DOS DE MAYO 1340 SAN ISIDRO","lat":-12.0921423,"lon":-77.0449063},{"orden":6,"pos":"REPSOL - SPRINT","cadena":"REPSOL","distrito":"SAN ISIDRO","proyecto":"REELS","ot":"IMPLEMENTAR REELS","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. VICTOR ANDRES BELAUNDE 147","lat":-12.0974675,"lon":-77.0372995},{"orden":7,"pos":"OXXO - ALZAMORA","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Conquistadores 417 - San Isidro","lat":-12.1002844,"lon":-77.0364174},{"orden":8,"pos":"OXXO - ARONA","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Juan de Arona 152. San Isidro","lat":-12.0968966,"lon":-77.0320036},{"orden":9,"pos":"OXXO - PLAZA NOVIEMBRE","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Calle 27 de noviembre 430. San Isidro","lat":-12.098139,"lon":-77.028826},{"orden":10,"pos":"OXXO - TAMAYO","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Augusto Tamayo con República de Colombia - San Isidro","lat":-12.0976288,"lon":-77.0272917},{"orden":11,"pos":"REPSOL - PARODI","cadena":"REPSOL","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"LUMUS CON PLACA + REEL","cant_cig":"2","direccion":"AV.PASEO PARODI 220 (SAN ISIDRO)","lat":-12.09172,"lon":-77.0298335},{"orden":12,"pos":"OXXO - CHOCAVENTO","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Canaval y Moreyra 480. San Isidro","lat":-12.097574,"lon":-77.020778},{"orden":13,"pos":"OXXO - PANAMA","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV REPÚBLICA DE PANAMÁ 3529 (SAN ISIDRO)","lat":-12.0988704,"lon":-77.0195315},{"orden":14,"pos":"OXXO - NEGOCIOS","cadena":"OXXO","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"CALLE LOS NEGOCIOS 183","lat":-12.105406,"lon":-77.0218964},{"orden":15,"pos":"OXXO - ORUÉ","cadena":"OXXO","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. DOMINGO ORUE N° 165","lat":-12.108108,"lon":-77.02595}],"MERCADERISTA B":[{"orden":1,"pos":"REPSOL - TENAUD","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV. AREQUIPA 4305 CON CARLOS TENAUD","lat":-12.1088587,"lon":-77.0307593},{"orden":2,"pos":"OXXO - CALDERON","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Arequipa 4468. Miraflores","lat":-12.110266,"lon":-77.030656},{"orden":3,"pos":"OXXO - CHICLAYO","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Avenida Angamos Oeste 701, Miraflores","lat":-12.113944,"lon":-77.03595},{"orden":4,"pos":"AVA - ESPINAR","cadena":"AVA","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. ANGAMOS OESTE 843","lat":-12.1142622,"lon":-77.0373114},{"orden":5,"pos":"AVA - DASSO","cadena":"AVA","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. CAMINO REAL 1298 SAN ISIDRO","lat":-12.1070887,"lon":-77.0397323},{"orden":6,"pos":"OXXO - CORDOVA","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Hipólito Unanue 355/359","lat":-12.109572,"lon":-77.048569},{"orden":7,"pos":"REPSOL - PARQUE MORA","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV ANGAMOS OESTE 1685 MIRAFLORES","lat":-12.1122212,"lon":-77.0475696},{"orden":8,"pos":"OXXO - TORIBIO","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Ejercito 612 - Miraflores","lat":-12.115034,"lon":-77.046453},{"orden":9,"pos":"PRIMAX - E/S EJERCITO","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV DEL EJERCITO 412","lat":-12.1163607,"lon":-77.0448439},{"orden":10,"pos":"REPSOL - 06 DE AGOSTO","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"BLACK PIANO DOBLE+REEL","cant_cig":"2","direccion":"AV. DEL EJERCITO N° 1295 SANTA CRUZ","lat":-12.1105381,"lon":-77.0512803},{"orden":11,"pos":"AVA - PEZET","cadena":"AVA","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. GRAL JUAN ANTONIO PEZET 1301 - SAN ISIDRO","lat":-12.1033513,"lon":-77.0518676},{"orden":12,"pos":"OXXO - ALQUILARIAS","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Salaverry 3570. San Isidro","lat":-12.102442,"lon":-77.058355},{"orden":13,"pos":"OXXO - HERRERA","cadena":"OXXO","distrito":"MAGDALENA DEL MAR","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. DEL EJERCITO N° 323/325, MAGDALENA","lat":-12.097625,"lon":-77.070001},{"orden":14,"pos":"OXXO - BRISA","cadena":"OXXO","distrito":"MAGDALENA DEL MAR","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Mariscal Sucre 290-292","lat":-12.096516,"lon":-77.07216},{"orden":15,"pos":"REPSOL - LEBAR","cadena":"REPSOL","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV JAVIER PRADO ESTE 1097","lat":-12.0898121,"lon":-77.0175076}]},"2":{"MERCADERISTA A":[{"orden":1,"pos":"PRIMAX - E/S EL CHORRILLANO","cadena":"PRIMAX","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. HUAYLAS N.360","lat":-12.1677717,"lon":-77.025595},{"orden":2,"pos":"OXXO - MATELLINI","cadena":"OXXO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. PROLONG. A. MATELLINI #183","lat":-12.1796592,"lon":-77.0104333},{"orden":3,"pos":"OXXO - GAVIOTAS","cadena":"OXXO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. GUARDIA PERUANA 692-696","lat":-12.1778336,"lon":-77.0058668},{"orden":4,"pos":"TAMBO - LACURVA","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. GUARDIA CIVIL NRO. 110","lat":-12.18501,"lon":-77.00724},{"orden":5,"pos":"REPSOL - LA ENCANTADA","cadena":"REPSOL","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"STAR LITE","cant_cig":"1","direccion":"AV. DEFENSORES DEL MORRO NRO. 2671","lat":-12.18511,"lon":-77.007421},{"orden":6,"pos":"TAMBO - HUAYLAS-C1","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV VILLA MARINA 110","lat":-12.1875559,"lon":-77.0078806},{"orden":7,"pos":"PRIMAX - E/S TAVIRSA","cadena":"PRIMAX","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV. CAMINO DEL INCA 110-134","lat":-12.1909,"lon":-77.006645},{"orden":8,"pos":"REPSOL - CEDROS DE VILLA","cadena":"REPSOL","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"URB. LOS CEDROS DE VILLA, AV. ALAMEDA SUR 597","lat":-12.1966438,"lon":-77.0105753},{"orden":9,"pos":"TAMBO - VILLA-UPC","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. ALAMEDA SAN MARCOS MZA. B3 LOTE. 28","lat":-12.19823,"lon":-77.00951},{"orden":10,"pos":"OXXO - BARATARIA","cadena":"OXXO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda San Marcos 410 - Chorrillos","lat":-12.199038,"lon":-77.00816},{"orden":11,"pos":"TAMBO - ALAMEDA SUR 2","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda Sur Mz. B, Lote 01","lat":-12.198877,"lon":-77.012501},{"orden":12,"pos":"TAMBO - ALAMEDASUR-C8","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda Sur N° 809, Chorrillos","lat":-12.199284,"lon":-77.01257},{"orden":13,"pos":"TAMBO - TOLOMEO.C1","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Jr. Tolomeo Nº 164","lat":-12.184504,"lon":-76.999207},{"orden":14,"pos":"REPSOL - CEBOTTO","cadena":"REPSOL","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"2","direccion":"AV. GUARDIA CIVIL 709 CON AV. EL SOL","lat":-12.1778868,"lon":-76.9965442},{"orden":15,"pos":"OXXO - ARIADNA","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"JR GAVIOTAS MZ 27 LT 12 SANTIAGO DE SURCO","lat":-12.1618186,"lon":-76.9953113}],"MERCADERISTA B":[{"orden":1,"pos":"PRIMAX - E/S FERRARI","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV TOMAS MARZANO 5010 SANTIAGO DE SURCO","lat":-12.1480205,"lon":-76.9866196},{"orden":2,"pos":"REPSOL - SAN BLAS","cadena":"REPSOL","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV LOS PROCERES NRO 101-103 SANTIAGO DE SURCO","lat":-12.1479914,"lon":-76.9858724},{"orden":3,"pos":"OXXO - PENSAMIENTOS","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV CAMINOS DEL INCA NRO 3535 SANTIAGO DE SURCO","lat":-12.1472966,"lon":-76.9857952},{"orden":4,"pos":"OXXO - TINOCO","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Andre Tinoco 460. Surco","lat":-12.143217,"lon":-76.985685},{"orden":5,"pos":"PRIMAX - E/S TOMAS MARSANO","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO SIMPLE","cant_cig":"1","direccion":"AV. TOMAS MARSANO ESQ. CON AV. SURCO","lat":-12.1392417,"lon":-76.9942517},{"orden":6,"pos":"OXXO - DELIA","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Ayacucho 204 - Surco","lat":-12.1415724,"lon":-77.0016073},{"orden":7,"pos":"OXXO - AYACUCHO","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"JR BATALLA DE AYACUCHO 335 (SANTIAGO DE SURCO)","lat":-12.144958,"lon":-77.0038803},{"orden":8,"pos":"PRIMAX - E/S GRANADA","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV.MARISCAL CASTILLA 905 SANTIAGO DE SURCO","lat":-12.1350715,"lon":-77.0074226},{"orden":9,"pos":"REPSOL - BARRANCO","cadena":"REPSOL","distrito":"BARRANCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"LUMUS CON REEL","cant_cig":"2","direccion":"AV REPÚBLICA DE PANAMÁ 290 BARRANCO","lat":-12.1390561,"lon":-77.0175291},{"orden":10,"pos":"OXXO - SAENZ","cadena":"OXXO","distrito":"BARRANCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Almirante Grau 909 - Barranco","lat":-12.142789,"lon":-77.0222},{"orden":11,"pos":"PRIMAX - LISTO BARRANCO","cadena":"PRIMAX","distrito":"BARRANCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"PJE SÁNCHEZ CARRION 195 BARRANCO","lat":-12.1483464,"lon":-77.0203429},{"orden":12,"pos":"OXXO - VARGAS","cadena":"OXXO","distrito":"SAN JUAN DE MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Vargas Machuca 318 - San Juan de Miraflores","lat":-12.165876,"lon":-76.974376},{"orden":13,"pos":"OXXO - VIVIANO","cadena":"OXXO","distrito":"SAN JUAN DE MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Cesar Canevaro 477. San Juan de Miraflores","lat":-12.164987,"lon":-76.96934},{"orden":14,"pos":"OXXO - VALENTÍN","cadena":"OXXO","distrito":"SAN JUAN DE MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. BELISARIO SUAREZ 969","lat":-12.162797,"lon":-76.9655},{"orden":15,"pos":"TAMBO - SANPEDRO-CHORRILLOS","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. EL TRIUNFO N°750","lat":-12.1965591,"lon":-76.9821349}]},"3":{"MERCADERISTA A":[{"orden":1,"pos":"OXXO - ORDOÑEZ","cadena":"OXXO","distrito":"SAN BORJA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"JR. ORDOÑEZ 190","lat":-12.1057608,"lon":-77.0074742},{"orden":2,"pos":"PRIMAX - LISTO PRIMAVERA","cadena":"PRIMAX","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO SIMPLE","cant_cig":"1","direccion":"AV. ANGAMOS ESTE N.°2398","lat":-12.1122184,"lon":-77.0057176},{"orden":3,"pos":"OXXO - ROETGEN","cadena":"OXXO","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. PRINCIPAL CDR 413 SURQUILLO","lat":-12.1150849,"lon":-77.0069912},{"orden":4,"pos":"OXXO - REAL","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Principal 775, Surquillo","lat":-12.118548,"lon":-77.004924},{"orden":5,"pos":"OXXO - ATENAS","cadena":"OXXO","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. MANUEL VILLARÁN 879","lat":-12.12047,"lon":-77.002796},{"orden":6,"pos":"PRIMAX - E/S LA CALERA","cadena":"PRIMAX","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO SIMPLE","cant_cig":"1","direccion":"AV. AVIACION 4524 - SURQUILLO","lat":-12.1197817,"lon":-76.9988248},{"orden":7,"pos":"OXXO - MARCONA","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. PEDRO VENTURO N°481 MZ. L2","lat":-12.121386,"lon":-76.9927905},{"orden":8,"pos":"PRIMAX - LISTO HIGUERETA","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. BENAVIDES 4295","lat":-12.1278674,"lon":-76.9918948},{"orden":9,"pos":"OXXO - LEON","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Benavides 3800 - Surco","lat":-12.128431,"lon":-76.995939},{"orden":10,"pos":"OXXO - MAKRO","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Tomas Marsano 2670. Miraflores","lat":-12.126627,"lon":-77.003098},{"orden":11,"pos":"AVA - BENAVIDES","cadena":"AVA","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. BENAVIDES N° 2849 Y 2889 - MIRAFLORES","lat":-12.127991,"lon":-77.005483},{"orden":12,"pos":"OXXO - WILLIAMS","cadena":"OXXO","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Aviación 3791 - Surquillo","lat":-12.11234,"lon":-76.99998},{"orden":13,"pos":"REPSOL - EL AVION","cadena":"REPSOL","distrito":"SAN BORJA","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO DOBLE","cant_cig":"2","direccion":"AV. AVIACIÓN 3401 SAN BORJA","lat":-12.1054831,"lon":-77.0007611},{"orden":14,"pos":"OXXO - BATRICH","cadena":"OXXO","distrito":"SAN BORJA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. San Borja Sur 1002","lat":-12.100827,"lon":-76.993707},{"orden":15,"pos":"REPSOL - ANGAMOS","cadena":"REPSOL","distrito":"SAN BORJA","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO SIMPLE","cant_cig":"1","direccion":"AV. PRIMAVERA 1095 SAN BORJA","lat":-12.1101882,"lon":-76.9801595}],"MERCADERISTA B":[{"orden":1,"pos":"REPSOL - PRECURSORES","cadena":"REPSOL","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"AV PRIMAVERA 1120 SANTIAGO DE SURCO","lat":-12.1107914,"lon":-76.9797757},{"orden":2,"pos":"AVA - PRIMAVERA","cadena":"AVA","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. PRIMAVERA 1212 - SURCO","lat":-12.11028,"lon":-76.976452},{"orden":3,"pos":"AVA - MONTERRICO","cadena":"AVA","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"URB. CENTRO COMERCIAL MONTERRICO AV. PRIMAVERA 1695","lat":-12.1089447,"lon":-76.9709982},{"orden":4,"pos":"OXXO - EL POLO","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. EL POLO 397 INT 501","lat":-12.1044673,"lon":-76.9729871},{"orden":5,"pos":"REPSOL - EL DERBY","cadena":"REPSOL","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"LUMUS CON PLACA + REEL","cant_cig":"2","direccion":"AV. EL DERBY 109 CON AV. EL POLO","lat":-12.0988462,"lon":-76.9710735},{"orden":6,"pos":"OXXO - CRONOS","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. EL DERBY Nro 55","lat":-12.099216,"lon":-76.969802},{"orden":7,"pos":"AVA - SURCO","cadena":"AVA","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. LOS INCAS 493 URB. GOLF DE LOS INCAS","lat":-12.0932667,"lon":-76.9672904},{"orden":8,"pos":"OXXO - DONATELLO","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Central 983. Surco","lat":-12.106816,"lon":-76.958398},{"orden":9,"pos":"OXXO - CORREGIDOR","cadena":"OXXO","distrito":"LA MOLINA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda del Corregidor 1586 - La Molina","lat":-12.0993777,"lon":-76.9504886},{"orden":10,"pos":"OXXO - SORIA","cadena":"OXXO","distrito":"LA MOLINA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda del Corregidor 2095 - La Molina","lat":-12.1052663,"lon":-76.9473962},{"orden":11,"pos":"REPSOL - SAIMON","cadena":"REPSOL","distrito":"LA MOLINA","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"BLACK PIANO DOBLE+REEL","cant_cig":"2","direccion":"RAUL FERRERO 1313 URB. SIRIUS II ETAPA","lat":-12.0912087,"lon":-76.9511124},{"orden":12,"pos":"PRIMAX - E/S LAS GARDENIAS","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"JR.BATALLA DE SAN JUAN NRO 112, SURCO","lat":-12.1273193,"lon":-76.977667},{"orden":13,"pos":"PRIMAX - E/S SURCO","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV CIRCUNVALACIÓN 377 (SANTIAGO DE SURCO)","lat":-12.1317568,"lon":-76.9776823},{"orden":14,"pos":"PRIMAX - E/S MONTREAL","cadena":"PRIMAX","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. CAMINO DEL INCA 2017 (SANTIAGO DE SURCO)","lat":-12.1302312,"lon":-76.9816501},{"orden":15,"pos":"OXXO - MONTE","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. MONTE DE LOS OLIVOS 299 (SANTIAGO DE SURCO)","lat":-12.1349536,"lon":-76.9866137}]},"4":{"MERCADERISTA A":[{"orden":1,"pos":"OXXO - MARTIN","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Calle San Martin 322-340-350","lat":-12.125254,"lon":-77.031216},{"orden":2,"pos":"PRIMAX - LISTO BENAVIDES 2","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO SIMPLE","cant_cig":"1","direccion":"AV BENAVIDES 433","lat":-12.1245536,"lon":-77.0289547},{"orden":3,"pos":"PRIMAX - LISTO SCHELL","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"CALLE SCHELL 324 - MIRAFLORES","lat":-12.1230884,"lon":-77.0286341},{"orden":4,"pos":"OXXO - SHELL","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Calle Grimaldo del Solar 222, Miraflores","lat":-12.1237485,"lon":-77.0258977},{"orden":5,"pos":"OXXO - SOLOR","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Benavides 701. Miraflores","lat":-12.124827,"lon":-77.025695},{"orden":6,"pos":"OXXO - BOLIVAR","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. SIMON BOLIVAR NRO 1402","lat":-12.1258034,"lon":-77.0273007},{"orden":7,"pos":"PRIMAX - E/S SAN ANTONIO","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV PASEO DE LA REPUBLICA 5789 MIRAFLORES","lat":-12.123484,"lon":-77.0240302},{"orden":8,"pos":"OXXO - ODICIO","cadena":"OXXO","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Calle Mariano Odicio N° 333 - San Isidro","lat":-12.121873,"lon":-77.0239},{"orden":9,"pos":"PRIMAX - E/S RICARDO PALMA","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"STAR LITE","cant_cig":"1","direccion":"AV. MCAL. ANDRES A. CÁCERES 110, MIRAFLORES","lat":-12.1199875,"lon":-77.0236375},{"orden":10,"pos":"PRIMAX - E/S PASEO DE LA REPUBLICA","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV. PASEO DE LA REPÚBLICA 5545, MIRAFLORES","lat":-12.1193169,"lon":-77.0253768},{"orden":11,"pos":"PRIMAX - LISTO RICARDO PALMA","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV RICARDO PALMA A-292 MIRAFLORES","lat":-12.1192581,"lon":-77.027035},{"orden":12,"pos":"OXXO - CACERES","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV MARISCAL ANDRES AVELINO CACERES 298 MIRAFLORES","lat":-12.1200535,"lon":-77.0211741},{"orden":13,"pos":"REPSOL - MIRAFLORES","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"BLACK PIANO DOBLE+REEL","cant_cig":"2","direccion":"AV ROOSEVELT 5672 MIRAFLORES","lat":-12.1205142,"lon":-77.0187759},{"orden":14,"pos":"OXXO - JULIAN","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Ricardo Palma 999. Miraflores","lat":-12.122523,"lon":-77.019739},{"orden":15,"pos":"OXXO - ENERO","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Benavides 1160 - Miraflores","lat":-12.1260187,"lon":-77.0204925}],"MERCADERISTA B":[{"orden":1,"pos":"REPSOL - LA AURORA","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"AV. REPUBLICA DE PANAMÁ CDR 61 CRUCE AV. BENAVIDES CDR 13","lat":-12.1259232,"lon":-77.018493},{"orden":2,"pos":"OXXO - CHARIARSE","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"CALLE JOSE GABRIEL CHARIARSE N°855, MIRAFLORES","lat":-12.1273806,"lon":-77.0181078},{"orden":3,"pos":"TAMBO - PANAMA-C63","cadena":"TAMBO","distrito":"MIRAFLORES","proyecto":"REELS","ot":"IMPLEMENTAR REELS","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV ROOSEVELT 6396 ESQ CON CL MIOTA 593 MIRAFLORES","lat":-12.12901,"lon":-77.01817},{"orden":4,"pos":"REPSOL - EL ROSEDAL","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"AV ROOSELVELT 6491 MIRAFLORES","lat":-12.1301463,"lon":-77.017741},{"orden":5,"pos":"REPSOL - REDUCTO","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"AV 28 DE JULIO 904 MIRAFLORES","lat":-12.1294894,"lon":-77.0234378},{"orden":6,"pos":"PRIMAX - E/S ARMENDARIZ","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV ARMENDARIZ 575 MIRAFLORES","lat":-12.1349347,"lon":-77.0251771},{"orden":7,"pos":"OXXO - ENRIQUE","cadena":"OXXO","distrito":"BARRANCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. El Sol Este 555. Barranco","lat":-12.139125,"lon":-77.018961},{"orden":8,"pos":"OXXO - SALGUERO","cadena":"OXXO","distrito":"SANTIAGO DE SURCO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Simon Salguero 553. Surco","lat":-12.130261,"lon":-77.007988},{"orden":9,"pos":"PRIMAX - E/S ALEGRIA","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. ALFREDO BENAVIDES 2116 MIRAFLORES","lat":-12.127727,"lon":-77.0101689},{"orden":10,"pos":"PRIMAX - E/S AURORA","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"BLACK PIANO SIMPLE","cant_cig":"1","direccion":"CALLE A. SCHEREIBER 124 - MIRAFLORES","lat":-12.1227475,"lon":-77.0111056},{"orden":11,"pos":"PRIMAX - LISTO SURQUILLO","cadena":"PRIMAX","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"STAR LITE","cant_cig":"1","direccion":"AV. REPUBLICA DE PANAMÁ 5185 SURQUILLO","lat":-12.116189,"lon":-77.0179802},{"orden":12,"pos":"PRIMAX - E/S EL ROSARIO","cadena":"PRIMAX","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. TOMAS MARSANO 1008 SURQUILLO","lat":-12.11308,"lon":-77.0120045},{"orden":13,"pos":"PRIMAX - LISTO PACHACUTEC","cadena":"PRIMAX","distrito":"SAN JUAN DE MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. DEFENSORES DE LIMA CON AV. TORRES PAZ S/N","lat":-12.1471323,"lon":-76.9703671},{"orden":14,"pos":"OXXO - BILLINGHURST","cadena":"OXXO","distrito":"SAN JUAN DE MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV GUILLERMO BILLINGHURST NRO 1127","lat":-12.1625275,"lon":-76.9622959},{"orden":15,"pos":"OXXO - ALLENDE","cadena":"OXXO","distrito":"VILLA MARIA DEL TRIUNFO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Salvador Allende 198, VMT","lat":-12.1595041,"lon":-76.9561617}]},"5":{"MERCADERISTA A":[{"orden":1,"pos":"REPSOL - SANTA MARIA","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"LUMUS CON PLACA + REEL","cant_cig":"2","direccion":"AV EL EJÉRCITO 290 MIRAFLORES","lat":-12.1175238,"lon":-77.0439643},{"orden":2,"pos":"PRIMAX - LISTO PARDO","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV.PARDO 680 MIRAFLORES","lat":-12.1189984,"lon":-77.0356692},{"orden":3,"pos":"OXXO - PARDO","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. José Pardo 575. Miraflores","lat":-12.119267,"lon":-77.034416},{"orden":4,"pos":"PRIMAX - LISTO PARDO 2","cadena":"PRIMAX","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV JOSE PARDO 380","lat":-12.1189464,"lon":-77.0321991},{"orden":5,"pos":"OXXO - PALACIOS","cadena":"OXXO","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av Enrique Palacios 370, Miraflores","lat":-12.1169253,"lon":-77.0320956},{"orden":6,"pos":"REPSOL - AREQUIPA","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"AV. AREQUIPA 5080 Y ENRIQUE PALACIOS","lat":-12.1169585,"lon":-77.0297309},{"orden":7,"pos":"REPSOL - INDEPENDENCIA","cadena":"REPSOL","distrito":"MIRAFLORES","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"ANGAMOS ESTE 498, MIRAFLORES","lat":-12.1138635,"lon":-77.0265833},{"orden":8,"pos":"OXXO - CASINELLI","cadena":"OXXO","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. República de Panamá 4496. Surquillo","lat":-12.109,"lon":-77.01856},{"orden":9,"pos":"REPSOL - PARQUE SUR","cadena":"REPSOL","distrito":"SAN BORJA","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"LUMUS CON REEL","cant_cig":"1","direccion":"AV. GUARDIA CIVIL 1109 ESQ. PARQUE SUR 314","lat":-12.1038219,"lon":-77.0145138},{"orden":10,"pos":"REPSOL - EL PARQUE","cadena":"REPSOL","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON PLACA + REEL","cant_cig":"2","direccion":"AV. GUARDIA CIVIL 1009 CRUCE AV. DEL PARQUE SUR","lat":-12.1030688,"lon":-77.0151484},{"orden":11,"pos":"REPSOL - PRINCIPAL","cadena":"REPSOL","distrito":"SURQUILLO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV. GALVEZ BARRENECHEA CDRA 11 - SAN ISIDRO","lat":-12.1075035,"lon":-77.0107417},{"orden":12,"pos":"REPSOL - TIKI TOO","cadena":"REPSOL","distrito":"SAN ISIDRO","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"LUMUS CON REEL","cant_cig":"1","direccion":"AV JOSÉ GÁLVEZ BARRENECHEA 211 SAN ISIDRO","lat":-12.0921841,"lon":-77.0135227},{"orden":13,"pos":"REPSOL - MONTECARLO","cadena":"REPSOL","distrito":"ATE VITARTE","proyecto":"REELS","ot":"IMPLEMENTAR REELS","cigarrera":"STAR LITE CON REEL","cant_cig":"1","direccion":"AV. EVITAMIENTO 1904 URB. LOS PARQUES DE MONTERRICO","lat":-12.0773211,"lon":-76.9761146},{"orden":14,"pos":"TAMBO - VILLA1","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"STAR ONE CON PLACA","cant_cig":"1","direccion":"AV. C MZA. N-6 LOTE. 3 URB. LOS CEDROS DE VILLA","lat":-12.20413,"lon":-77.01363},{"orden":15,"pos":"OXXO - CEDROS","cadena":"OXXO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda Los Cedros 296 - Chorrillos","lat":-12.2044432,"lon":-77.0135945}],"MERCADERISTA B":[{"orden":1,"pos":"TAMBO - ALAMEDA-C6","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Alameda Los Cedros N° 686-688, Chorrillos","lat":-12.206441,"lon":-77.011318},{"orden":2,"pos":"TAMBO - ALAMEDA-SUR","cadena":"TAMBO","distrito":"CHORRILLOS","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"MZA. A LOTE. 2 URB. ALAMEDA SUR DE VILLA","lat":-12.20593,"lon":-77.01772},{"orden":3,"pos":"PRIMAX - E/S PETROSUR","cadena":"PRIMAX","distrito":"VILLA EL SALVADOR","proyecto":"DISPENSER MULTICATEGORIA | FACING Y NICHO","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR FACING Y NICHO VELO CIGARRERA","cigarrera":"STAR LITE","cant_cig":"1","direccion":"PANAMERICANA SUR KM 19.2 - VILLA EL SALVADOR","lat":-12.2235609,"lon":-76.9742987},{"orden":4,"pos":"OXXO - HOSPITAL VES","cadena":"OXXO","distrito":"VILLA EL SALVADOR","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"SECTOR 03, GRUPO 31, MZ C3 LOTE 15 - Villa El Salvador","lat":-12.231986,"lon":-76.93352},{"orden":5,"pos":"PRIMAX - E/S EL TREN","cadena":"PRIMAX","distrito":"LURIN","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"PANAMERICANA SUR KM 24 - LURIN","lat":-12.2472676,"lon":-76.937178},{"orden":6,"pos":"PRIMAX - E/S SAN CARLOS","cadena":"PRIMAX","distrito":"LURIN","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"CARRETERA PANAMERICANA SUR KM. 29.5","lat":-12.272468,"lon":-76.8967783},{"orden":7,"pos":"PRIMAX - E/S PANSUR","cadena":"PRIMAX","distrito":"LURIN","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"PANAMERICANA SUR KM 30","lat":-12.276003,"lon":-76.8899311},{"orden":8,"pos":"PRIMAX - E/S PUNTA HERMOSA","cadena":"PRIMAX","distrito":"PUNTA HERMOSA","proyecto":"DISPENSER MULTICATEGORIA | REELS","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + IMPLEMENTAR REELS CIGARRERA","cigarrera":"STAR ONE CON REEL","cant_cig":"1","direccion":"PANAMERICANA SUR KM. 40","lat":-12.3167344,"lon":-76.8317475},{"orden":9,"pos":"TAMBO - PUNTA HERMOSA 3","cadena":"TAMBO","distrito":"PUNTA HERMOSA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"NUEVA GENERACION MZ A LT 10 PUNTA HERMOSA","lat":-12.327398,"lon":-76.825206},{"orden":10,"pos":"OXXO - SUNSET","cadena":"OXXO","distrito":"PUNTA HERMOSA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Sunset Mz. S Lt 27 - Punta Hermosa","lat":-12.3330132,"lon":-76.8247834},{"orden":11,"pos":"TAMBO - PUNTAHERMOSA","cadena":"TAMBO","distrito":"PUNTA HERMOSA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"MZA. M LOTE. 2 URB. AMP SANTA CRUZ - PUNTA HERMOSA","lat":-12.33313,"lon":-76.82474},{"orden":12,"pos":"TAMBO - PUNTA HERMOSA 2","cadena":"TAMBO","distrito":"PUNTA HERMOSA","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Santa Cruz Calle Riva Agüero Mz. I Lote 01","lat":-12.335805,"lon":-76.824877},{"orden":13,"pos":"OXXO - SALIRROSAS","cadena":"OXXO","distrito":"SAN BARTOLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"Av. Mar Pacífico Mz. F Lote 10 - San Bartolo","lat":-12.3887954,"lon":-76.777902},{"orden":14,"pos":"TAMBO - SANBARTOLO","cadena":"TAMBO","distrito":"SAN BARTOLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. MAR PACIFICO NRO. 402 SAN BARTOLO","lat":-12.3889444,"lon":-76.777758},{"orden":15,"pos":"TAMBO - SAN BARTOLO 2","cadena":"TAMBO","distrito":"SAN BARTOLO","proyecto":"DISPENSER MULTICATEGORIA","ot":"IMPLEMENTAR MATERIALES D. MULTICATEGORÍA","cigarrera":"","cant_cig":"","direccion":"AV. SAN JOSE NUM 637 MZ Z LT 20-B URB SAN JOSE","lat":-12.3865521,"lon":-76.7721681}]}};
+
+const CADENA_CLR = {OXXO:'#C9333A',TAMBO:'#D9742B',PRIMAX:'#2A5BA8',REPSOL:'#B89B1F',AVA:'#7B45B0',BODEGA:'#5A6070'};
+const VISIT_MIN = {'DISPENSER MULTICATEGORIA':25,'DISPENSER MULTICATEGORIA | REELS':35,'DISPENSER MULTICATEGORIA | FACING Y NICHO':35,'REELS':20,'FACING Y NICHO':20};
+const START = 8*60, TRAVEL = 8;
+const PROY_SHORT = {'DISPENSER MULTICATEGORIA':'Dispenser','DISPENSER MULTICATEGORIA | REELS':'Disp + Reel','DISPENSER MULTICATEGORIA | FACING Y NICHO':'Disp + Facing','REELS':'Reel','FACING Y NICHO':'Facing'};
+
+let curDay=1, curMerch='A', selIdx=null;
+let map, markers=[], polyline=null;
+
+function getPoints(){return DATA[String(curDay)][curMerch==='A'?'MERCADERISTA A':'MERCADERISTA B'];}
+function calcTimes(pts){let m=START;return pts.map((p,i)=>{if(i>0)m+=TRAVEL;const s=m;const d=VISIT_MIN[p.proyecto]||25;m+=d;return{start:s,end:m,dur:d};});}
+function fmt(m){const h=Math.floor(m/60),mm=m%60;return`${h}:${String(mm).padStart(2,'0')}`;}
+function escHtml(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+// ── MAP INIT ──
+map = L.map('map', {zoomControl:true, attributionControl:false}).setView([-12.1,-77.03],13);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+L.control.attribution({position:'bottomright'}).addAttribution('© CartoDB').addTo(map);
+
+function renderMap(){
+  const pts = getPoints();
+  const times = calcTimes(pts);
+  const mc = curMerch==='A'?'#3A7FD5':'#2E9E6B';
+
+  // Clear
+  markers.forEach(m=>map.removeLayer(m));
+  markers=[];
+  if(polyline) map.removeLayer(polyline);
+
+  // Route line
+  const latlngs = pts.map(p=>[p.lat,p.lon]);
+  polyline = L.polyline(latlngs, {color:mc, weight:2.5, opacity:0.55, dashArray:'6,5'}).addTo(map);
+
+  // Markers
+  pts.forEach((p,i)=>{
+    const col = CADENA_CLR[p.cadena]||'#888';
+    const isSel = selIdx===i;
+    const sz = isSel?30:22;
+    const icon = L.divIcon({
+      className:'',
+      html:`<div class="bat-marker${isSel?' selected':''}" style="width:${sz}px;height:${sz}px;background:${col};font-size:${isSel?11:9}px;border-color:${isSel?'#C8A84B':'rgba(255,255,255,.4)'};border-width:${isSel?'2.5px':'2px'}">${p.orden}</div>`,
+      iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
+    });
+    const m = L.marker([p.lat,p.lon],{icon}).addTo(map);
+
+    // Popup
+    const t = times[i];
+    const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=driving`;
+    const wazeUrl=`https://waze.com/ul?ll=${p.lat},${p.lon}&navigate=yes`;
+    const otShort = (p.ot||'').replace('IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + ','').replace('IMPLEMENTAR MATERIALES D. MULTICATEGORÍA','Dispenser multicategoría');
+    const cigBlock = p.cigarrera?`<div class="popup-cig"><span class="popup-cig-icon">🚬</span><span class="popup-cig-text">Cigarrera: ${escHtml(p.cigarrera)}${p.cant_cig?' — cantidad: '+p.cant_cig:''}</span></div>`:'';
+    m.bindPopup(`<div class="popup-inner">
+      <div class="popup-header">
+        <div class="popup-num" style="background:${col}">${p.orden}</div>
+        <div class="popup-title-wrap">
+          <div class="popup-title">${escHtml(p.pos)}</div>
+          <div class="popup-cadena" style="color:${col}">${p.cadena}</div>
+        </div>
+      </div>
+      <div class="popup-grid">
+        <div class="popup-key">Distrito</div><div class="popup-val">${escHtml(p.distrito)}</div>
+        <div class="popup-key">Dirección</div><div class="popup-val">${escHtml(p.direccion)}</div>
+        <div class="popup-key">Hora</div><div class="popup-val">${fmt(t.start)} — ${fmt(t.end)} (${t.dur} min)</div>
+        <div class="popup-key">Proyecto</div><div class="popup-val">${PROY_SHORT[p.proyecto]||p.proyecto}</div>
+        <div class="popup-key">OT</div><div class="popup-val">${escHtml(otShort)}</div>
+      </div>
+      ${cigBlock}
+      <div class="popup-actions">
+        <a class="popup-btn popup-btn-maps" href="${mapsUrl}" target="_blank">📍 Google Maps</a>
+        <a class="popup-btn popup-btn-waze" href="${wazeUrl}" target="_blank">🔵 Waze</a>
+      </div>
+    </div>`,{maxWidth:300,className:'bat-popup'});
+
+    m.on('click',()=>{selIdx=(selIdx===i?null:i);renderMap();renderList();if(selIdx!==null)scrollToCard(selIdx);});
+    markers.push(m);
+  });
+
+  // Fit bounds
+  if(latlngs.length) map.fitBounds(L.latLngBounds(latlngs).pad(0.15));
+
+  renderList();
+  renderStats();
+}
+
+function renderList(){
+  const pts=getPoints(); const times=calcTimes(pts);
+  const mc=curMerch==='A'?'#3A7FD5':'#2E9E6B';
+  const mLabel=curMerch==='A'?'Mercaderista A':'Mercaderista B';
+  document.getElementById('sidebarTitle').textContent=`Día ${curDay} · ${mLabel} · ${pts.length} paradas`;
+  document.getElementById('routeList').innerHTML=pts.map((p,i)=>{
+    const t=times[i]; const col=CADENA_CLR[p.cadena]||'#888';
+    const isSel=selIdx===i;
+    const mapsUrl=`https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=driving`;
+    const otShort=(p.ot||'').replace('IMPLEMENTAR MATERIALES D. MULTICATEGORÍA + ','').replace('IMPLEMENTAR MATERIALES D. MULTICATEGORÍA','Dispenser');
+    const cig=p.cigarrera?`<div class="stop-cig">🚬 ${escHtml(p.cigarrera)}${p.cant_cig?' ×'+p.cant_cig:''}</div>`:'';
+    return`<div class="stop-card${isSel?' selected':''}" id="card-${i}" onclick="selectCard(${i})">
+      <div class="stop-num-wrap">
+        <div class="stop-num" style="background:${col}">${p.orden}</div>
+        ${i<pts.length-1?`<div class="stop-connector" style="background:${mc}44"></div>`:''}
+      </div>
+      <div class="stop-body">
+        <div class="stop-name">${escHtml(p.pos)}</div>
+        <div class="stop-meta">
+          <span class="stop-time">${fmt(t.start)}</span>
+          <span class="stop-district">${escHtml(p.distrito)}</span>
+          <span class="stop-dur">${t.dur}min</span>
+        </div>
+        <div class="stop-ot">${escHtml(PROY_SHORT[p.proyecto]||'')} — ${escHtml(otShort)}</div>
+        ${cig}
+        <a class="nav-link" href="${mapsUrl}" target="_blank">↗ Navegar</a>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderStats(){
+  const pts=getPoints(); const times=calcTimes(pts);
+  const last=times[times.length-1];
+  const disp=pts.filter(p=>p.proyecto.includes('DISPENSER')).length;
+  const reel=pts.filter(p=>p.proyecto.includes('REELS')).length;
+  const facing=pts.filter(p=>p.proyecto.includes('FACING')).length;
+  const cadenas={};pts.forEach(p=>cadenas[p.cadena]=(cadenas[p.cadena]||0)+1);
+  const cadenaStr=Object.entries(cadenas).map(([k,v])=>`<span class="stat-item"><span class="stat-val" style="color:${CADENA_CLR[k]||'#888'}">${v}</span><span class="stat-lbl">${k}</span></span>`).join('');
+  document.getElementById('statsBar').innerHTML=
+    `<span class="stat-item"><span class="stat-val">08:00</span><span class="stat-lbl">Inicio</span></span>`+
+    `<span class="stat-sep"></span>`+
+    `<span class="stat-item"><span class="stat-val">${fmt(last.end)}</span><span class="stat-lbl">Fin est.</span></span>`+
+    `<span class="stat-sep"></span>`+
+    `${cadenaStr}`+
+    `<span class="stat-sep"></span>`+
+    `<div class="project-tags">`+
+    (disp?`<span class="ptag disp">Dispenser ${disp}</span>`:'')+
+    (reel?`<span class="ptag reel">Reel ${reel}</span>`:'')+
+    (facing?`<span class="ptag facing">Facing ${facing}</span>`:'')+
+    `</div>`;
+}
+
+function selectCard(i){selIdx=(selIdx===i?null:i);renderMap();if(selIdx!==null){markers[selIdx].openPopup();}}
+function scrollToCard(i){const el=document.getElementById('card-'+i);if(el)el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+
+window.selectDay=(d,btn)=>{curDay=d;selIdx=null;document.querySelectorAll('.day-pill').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderMap();};
+window.selectMerch=(m)=>{curMerch=m;selIdx=null;document.getElementById('btnA').className='merch-btn'+(m==='A'?' active-a':'');document.getElementById('btnB').className='merch-btn'+(m==='B'?' active-b':'');renderMap();};
+window.openFullRoute=()=>{
+  const pts=getPoints();if(!pts.length)return;
+  const origin=`${pts[0].lat},${pts[0].lon}`;
+  const dest=`${pts[pts.length-1].lat},${pts[pts.length-1].lon}`;
+  const wps=pts.slice(1,-1).map(p=>`${p.lat},${p.lon}`).join('|');
+  window.open(`https://www.google.com/maps/dir/?api=1&origin=${origin}&destination=${dest}&waypoints=${wps}&travelmode=driving`,'_blank');
+};
+
+renderMap();
+</script>
+</body>
+</html>
